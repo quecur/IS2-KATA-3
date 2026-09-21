@@ -1,5 +1,6 @@
-package io;
+package app;
 
+import io.MovieLoader;
 import model.Movie;
 
 import java.io.BufferedInputStream;
@@ -12,14 +13,16 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 
 public class RemoteMovieLoader implements MovieLoader {
 
     private final URL remoteURL;
-
-    public RemoteMovieLoader(String remoteURL) throws MalformedURLException {
+    private final Function<String, Movie> deserialize;
+    public RemoteMovieLoader(String remoteURL, Function<String, Movie> deserialize) throws MalformedURLException {
         this.remoteURL = URI.create(remoteURL).toURL();
+        this.deserialize = deserialize;
     }
 
     @Override
@@ -45,12 +48,11 @@ public class RemoteMovieLoader implements MovieLoader {
 
     private List<Movie> loadAllFrom(BufferedReader bufferedReader) throws IOException {
         List<Movie> movies = new ArrayList<>();
-        MovieParser movieParser = new TsvMovieParser();
         bufferedReader.readLine();
         while (true){
             String line = bufferedReader.readLine();
             if (line == null) break;
-            movies.add(movieParser.parseMovie(line));
+            movies.add(deserialize.apply(line));
         }
         return movies;
     }
